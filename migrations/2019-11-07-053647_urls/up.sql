@@ -1,0 +1,6 @@
+-- Your SQL goes here
+CREATE TABLE urls (
+  id SERIAL PRIMARY KEY,
+  url VARCHAR NOT NULL UNIQUE,
+  active BOOLEAN NOT NULL DEFAULT 't'
+)
