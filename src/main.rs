@@ -5,9 +5,6 @@ use is_my_site_up::fetching::{head_req, init_client};
 use is_my_site_up::models::{NewUrl, NewUrlStatus};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // let client = Client::new();
-    // let resp = client.head("http://httpbin.org/").send()?;
-    // println!("{:#?}", resp);
     let conn = establish_connection();
     let url = NewUrl::create_or_get(&conn, "http://dpbriggs.ca");
     let url_status = NewUrlStatus::new(&url, 200).save(&conn);
@@ -18,6 +15,5 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let url_status = NewUrlStatus::new(&url, resp.status().as_u16() as i32).save(&conn);
         dbg!(url_status);
     }
-    // dbg!(all_url_status);
     Ok(())
 }
