@@ -4,11 +4,26 @@ use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use std::time::SystemTime;
 
-#[derive(Queryable)]
+#[derive(Queryable, Serialize, Deserialize)]
 pub struct Url {
     pub id: i32,
     pub url: String,
     pub active: bool,
+}
+
+impl Url {
+    pub fn get<'a>(conn: &PgConnection, url_str: &'a str) -> Option<Url> {
+        use super::schema::urls::dsl::*;
+        let mut existing: Vec<_> = urls
+            .filter(url.eq(url_str))
+            .load::<Url>(conn)
+            .expect("Error loading posts");
+        existing.pop()
+    }
+
+    pub fn get_status<'a>(conn: &PgConnection, url_str: &'a str) -> Option<Vec<UrlStatus>> {
+        Url::get(conn, url_str).map(|url| UrlStatus::fetch_all(conn, &url))
+    }
 }
 
 #[derive(Insertable)]
@@ -54,6 +69,16 @@ pub struct UrlStatus {
     pub http_status: i32,
 }
 
+impl UrlStatus {
+    pub fn fetch_all(conn: &PgConnection, url: &Url) -> Vec<UrlStatus> {
+        use super::schema::url_status::dsl::*;
+        url_status
+            .filter(url_id.eq(url.id))
+            .load(conn)
+            .expect("Error loading posts")
+    }
+}
+
 #[derive(Insertable, Queryable)]
 #[table_name = "url_status"]
 pub struct NewUrlStatus {
@@ -74,13 +99,5 @@ impl NewUrlStatus {
             .values(self)
             .get_result(conn)
             .expect("Error saving new post")
-    }
-
-    pub fn fetch_all(url: &Url, conn: &PgConnection) -> Vec<UrlStatus> {
-        use super::schema::url_status::dsl::*;
-        url_status
-            .filter(url_id.eq(url.id))
-            .load(conn)
-            .expect("Error loading posts")
     }
 }

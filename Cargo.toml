@@ -15,9 +15,10 @@ path = "src/main.rs"
 
 [dependencies]
 reqwest = "0.9.22"
-diesel = { version = "1.0.0", features = ["postgres", "chrono"] }
+diesel = { version = "1.0.0", features = ["postgres", "chrono", "r2d2"] }
 chrono = { version = "0.4.9", features = ["serde"] }
 dotenv = "0.9.0"
 serde_derive = "1.0.102"
 serde = "1.0.102"
+warp = "0.1.20"
 
