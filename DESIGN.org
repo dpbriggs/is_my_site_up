@@ -1,0 +1,74 @@
+#+TITLE: Is-My-Site-Up Design Docs
+#+AUTHOR: David Briggs
+
+* Is-My-Site-Up Holistic Goals
+
+- Globally distributed, low latency health checks.
+- Cheap enough to run on student credits.
+
+* Requirements
+
+Is-My-Site-Up needs to perform the following:
+
+1. Continuously and periodically perform GET/HEAD requests from multiple locations.
+2. Quickly aggregate data from multiple locations to determine if a websites down.
+3. Provide a webhook trigger system.
+   1. Eg. If website is determined to be down, make a POST req to this url with payload.
+4. Present a CRUD interface for users.
+   1. Website: Add URLs, view status, etc
+   2. REST API: :ditto:
+5. Should be solid enough to not require constant maintenance.
+   1. Should minimize moving parts. Ideally use database for everything.
+
+* Components
+
+We'll abbreviate Is-My-Site-Up to ismu.
+
+** Data Types
+
+*** URLs
+
+The URL we're inspecting.
+
+*** Url Status
+
+A datatype from a single location. Contains a timestamp and http status, or error.
+
+*** User Accounts
+
+Simple email / password. Ideally find a crate to provide this automatically.
+
+*** API Tokens
+
+Simple tokens with reference to user account. Should be cheap and easy to rotate.
+
+*** Triggers
+
+URLs to POST when a website is determined to be down.
+Triggers can be associated with a URL, Account, or both.
+Multiple triggers can be run for the same event.
+
+** ismu_http_server
+
+REST CRUD service. We'll provide the following capabilities:
+
+- CRUD URLs.
+- CRUD user accounts.
+  - Create/Rotate API Tokens.
+  - Related authentication.
+  - Export all stored user data.
+- Paged status history.
+  - eg. Download all url status' in the last two months.
+- CRUD Triggers.
+
+
+** ismu_workers
+
+Workers that:
+
+- periodically ping websites and record data in database.
+  - Check if there's been at least two other recent fails OR recent failed locations.
+    - Spawn tasks for associated trigger(s).
+      - TODO: Determine which location will trigger. Probably the one who found the issue.
+      - Possible optimization is a two-phase commit style to ensure triggers are run.
+
