@@ -1,46 +1,30 @@
-// fn index(info: web::Path<(u32, String)>) -> impl Responder {
-//     format!("Hello {}! id:{}", info.1, info.0)
-// }
+#![feature(proc_macro_hygiene, decl_macro)]
 
-// pub fn server() -> std::io::Result<()> {
-//     let sys = actix::System::new("mystore");
-//     HttpServer::new(|| {
-//         App::new().service(web::resource("/products").route(web::get().to_async(index)))
-//     })
-//     .bind("127.0.0.1:8088")
-//     .unwrap()
-//     .start();
-//     println!("Started http server: 127.0.0.1:8088");
-//     let _ = sys.run();
-//     Ok(())
-// }
+#[macro_use]
+extern crate rocket;
 
-use crate::database::{make_pool, PgPool, PooledPg};
-use crate::models::Url;
-use std::sync::Arc;
-// use warp::{self, reject, Filter};
-use warp::{self, path, reject, Filter};
+#[macro_use]
+extern crate lazy_static;
+
+use is_my_site_up::database::{make_pool, PgPool};
+use is_my_site_up::models::{Url, UrlStatus};
+use rocket_contrib::json::Json;
+
+lazy_static! {
+    pub static ref PG_POOL: PgPool = make_pool();
+}
+
+#[get("/")]
+fn index() -> Json<Vec<UrlStatus>> {
+    let db = PG_POOL.get().unwrap();
+    Json(Url::get_status(&db, "http://dpbriggs.ca").unwrap_or_else(|| vec![]))
+}
 
 pub fn server() {
-    let pool = make_pool();
-    let hello = path!("hello" / String).map(|name| format!("Hello, {}!", name));
+    rocket::ignite().mount("/", routes![index]).launch();
+}
 
-    let pg = warp::any()
-        .map(move || pool.clone())
-        .and_then(|pool: PgPool| match pool.get() {
-            Ok(conn) => Ok(conn),
-            Err(_) => Err(reject::server_error()),
-        });
-    let hello_world = warp::get(
-        warp::index()
-            // use the pg connection on the route
-            .and(pg.clone())
-            .map(|db: PooledPg| {
-                let statuses = Url::get_status(&db, "http://dpbriggs.ca");
-                warp::reply::json(&statuses)
-            }),
-    );
-
-    let routes = warp::get2().and(hello_world.or(hello));
-    warp::serve(routes).run(([0, 0, 0, 0], 3030));
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    server();
+    Ok(())
 }

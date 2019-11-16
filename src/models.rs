@@ -2,7 +2,6 @@ use super::schema::{url_status, urls};
 use chrono::NaiveDateTime;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
-use std::time::SystemTime;
 
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct Url {

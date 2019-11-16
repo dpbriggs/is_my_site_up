@@ -10,8 +10,12 @@ name = "is_my_site_up"
 path = "src/lib.rs"
 
 [[bin]]
-name = "is_my_site_up"
-path = "src/main.rs"
+name = "imsu_http_server"
+path = "src/server.rs"
+
+[[bin]]
+name = "imsu_workers"
+path = "src/workers.rs"
 
 [dependencies]
 reqwest = "0.9.22"
@@ -20,5 +24,7 @@ chrono = { version = "0.4.9", features = ["serde"] }
 dotenv = "0.9.0"
 serde_derive = "1.0.102"
 serde = "1.0.102"
-warp = "0.1.20"
+rocket = "0.4.2"
+lazy_static = "1.4.0"
+rocket_contrib = "0.4.2"
 
